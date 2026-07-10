@@ -1,14 +1,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import '../../styles/auth-shared.css';
-import axios from 'axios';
+import axiosInstance from '../../api/axios';
 import { useNavigate } from 'react-router-dom';
+import useAuthStore from '../../store/useAuthStore';
+import toast from 'react-hot-toast';
 
 const FoodPartnerRegister = () => {
 
   const navigate = useNavigate();
+  const login = useAuthStore((state) => state.login);
   
-  const handleSubmit = (e) => { 
+  const handleSubmit = async (e) => { 
     e.preventDefault();
 
     const businessName = e.target.businessName.value;
@@ -18,21 +21,25 @@ const FoodPartnerRegister = () => {
     const password = e.target.password.value;
     const address = e.target.address.value;
 
-    axios.post("http://localhost:3000/api/auth/food-partner/register", {
-      name:businessName,
-      contactName,
-      phone,
-      email,
-      password,
-      address
-    }, { withCredentials: true })
-      .then(response => {
-        console.log(response.data);
-        navigate("/create-food"); // Redirect to create food page after successful registration
-      })
-      .catch(error => {
-        console.error("There was an error registering!", error);
+    const toastId = toast.loading('Registering...');
+
+    try {
+      const response = await axiosInstance.post("/auth/food-partner/register", {
+        name: businessName,
+        contactName,
+        phone,
+        email,
+        password,
+        address
       });
+
+      login(response.data.foodPartner, 'partner');
+      toast.success(response.data.message, { id: toastId });
+      navigate(`/food-partner/${response.data.foodPartner._id}`); // Redirect to profile
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Registration failed", { id: toastId });
+      console.error(error);
+    }
   };
 
   return (

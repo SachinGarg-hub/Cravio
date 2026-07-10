@@ -1,11 +1,14 @@
 import React from 'react';
 import '../../styles/auth-shared.css';
-import axios from 'axios';
+import axiosInstance from '../../api/axios';
 import { useNavigate } from 'react-router-dom';
+import useAuthStore from '../../store/useAuthStore';
+import toast from 'react-hot-toast';
 
 const FoodPartnerLogin = () => {
 
   const navigate = useNavigate();
+  const login = useAuthStore((state) => state.login);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -13,15 +16,23 @@ const FoodPartnerLogin = () => {
     const email = e.target.email.value;
     const password = e.target.password.value;
 
-    const response = await axios.post("http://localhost:3000/api/auth/food-partner/login", {
-      email,
-      password
-    }, { withCredentials: true });
+    const toastId = toast.loading('Signing in...');
 
-    console.log(response.data);
+    try {
+      const response = await axiosInstance.post('/auth/food-partner/login', {
+        email,
+        password
+      });
 
-    navigate("/create-food"); // Redirect to create food page after login
-
+      login(response.data.foodPartner, 'partner');
+      toast.success(response.data.message, { id: toastId });
+      
+      // Redirect to food partner profile
+      navigate(`/food-partner/${response.data.foodPartner._id}`);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Login failed", { id: toastId });
+      console.error(error);
+    }
   };
 
   return (

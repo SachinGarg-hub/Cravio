@@ -10,20 +10,31 @@ import Saved from '../pages/general/Saved';
 import BottomNav from '../components/BottomNav';
 import CreateFood from '../pages/food-partner/CreateFood';
 import Profile from '../pages/food-partner/Profile';
+import PrivateRoute from '../components/PrivateRoute';
 
 const AppRoutes = () => {
     return (
         <Router>
             <Routes>
+                {/* Public Routes */}
                 <Route path="/register" element={<ChooseRegister />} />
                 <Route path="/user/register" element={<UserRegister />} />
                 <Route path="/user/login" element={<UserLogin />} />
                 <Route path="/food-partner/register" element={<FoodPartnerRegister />} />
                 <Route path="/food-partner/login" element={<FoodPartnerLogin />} />
+                
+                {/* Home doesn't need to be strictly private for reading, but interacting might require auth */}
                 <Route path="/" element={<><Home /><BottomNav /></>} />
-                <Route path="/saved" element={<><Saved /><BottomNav /></>} />
-                <Route path="/create-food" element={<CreateFood />} />
-                <Route path="/food-partner/:id" element={<Profile />} />
+
+                {/* Protected Routes */}
+                <Route element={<PrivateRoute />}>
+                    <Route path="/saved" element={<><Saved /><BottomNav /></>} />
+                    <Route path="/food-partner/:id" element={<Profile />} />
+                </Route>
+
+                <Route element={<PrivateRoute allowedRole="partner" />}>
+                    <Route path="/create-food" element={<CreateFood />} />
+                </Route>
             </Routes>
         </Router>
     )

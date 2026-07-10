@@ -1,46 +1,49 @@
-import React, { useEffect, useState } from 'react'
-import axios from 'axios';
-import '../../styles/reels.css'
-import ReelFeed from '../../components/ReelFeed'
+import React, { useEffect, useState } from 'react';
+import axiosInstance from '../../api/axios';
+import '../../styles/reels.css';
+import ReelFeed from '../../components/ReelFeed';
+import toast from 'react-hot-toast';
 
 const Home = () => {
-    const [ videos, setVideos ] = useState([])
-    // Autoplay behavior is handled inside ReelFeed
+    const [videos, setVideos] = useState([]);
 
     useEffect(() => {
-        axios.get("http://localhost:3000/api/food", { withCredentials: true })
+        axiosInstance.get("/food")
             .then(response => {
-
-                console.log(response.data);
-
-                setVideos(response.data.foodItems)
+                setVideos(response.data.foodItems);
             })
-            .catch(() => { /* noop: optionally handle error */ })
-    }, [])
-
-    // Using local refs within ReelFeed; keeping map here for dependency parity if needed
+            .catch(() => { toast.error("Failed to load videos"); });
+    }, []);
 
     async function likeVideo(item) {
+        try {
+            const response = await axiosInstance.post("/food/like", { foodId: item._id });
 
-        const response = await axios.post("http://localhost:3000/api/food/like", { foodId: item._id }, {withCredentials: true})
-
-        if(response.data.like){
-            console.log("Video liked");
-            setVideos((prev) => prev.map((v) => v._id === item._id ? { ...v, likeCount: v.likeCount + 1 } : v))
-        }else{
-            console.log("Video unliked");
-            setVideos((prev) => prev.map((v) => v._id === item._id ? { ...v, likeCount: v.likeCount - 1 } : v))
+            if (response.data.like) {
+                toast.success("Liked");
+                setVideos((prev) => prev.map((v) => v._id === item._id ? { ...v, likeCount: v.likeCount + 1 } : v));
+            } else {
+                toast.success("Unliked");
+                setVideos((prev) => prev.map((v) => v._id === item._id ? { ...v, likeCount: v.likeCount - 1 } : v));
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to like video");
         }
-        
     }
 
     async function saveVideo(item) {
-        const response = await axios.post("http://localhost:3000/api/food/save", { foodId: item._id }, { withCredentials: true })
-        
-        if(response.data.save){
-            setVideos((prev) => prev.map((v) => v._id === item._id ? { ...v, savesCount: v.savesCount + 1 } : v))
-        }else{
-            setVideos((prev) => prev.map((v) => v._id === item._id ? { ...v, savesCount: v.savesCount - 1 } : v))
+        try {
+            const response = await axiosInstance.post("/food/save", { foodId: item._id });
+            
+            if (response.data.save) {
+                toast.success("Saved");
+                setVideos((prev) => prev.map((v) => v._id === item._id ? { ...v, savesCount: v.savesCount + 1 } : v));
+            } else {
+                toast.success("Unsaved");
+                setVideos((prev) => prev.map((v) => v._id === item._id ? { ...v, savesCount: v.savesCount - 1 } : v));
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to save video");
         }
     }
 
@@ -54,4 +57,4 @@ const Home = () => {
     )
 }
 
-export default Home
+export default Home;

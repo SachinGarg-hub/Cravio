@@ -6,10 +6,7 @@ const router = express.Router();
 // user auth APIs
 router.post('/user/register', authController.registerUser)
 router.post('/user/login', authController.loginUser)
-// router.get("/test", (req, res) => {
-//   res.send("auth route working");
-// });
- router.get('/user/logout', authController.logoutUser)
+router.get('/user/logout', authController.logoutUser)
 
 
 
